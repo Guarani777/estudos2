@@ -1,2 +1,67 @@
-Ola meu nome e Fabio Guarani sousa 
-sou uma nova linha 
+// hospital.js
+// Modelo simples: 400 pacientes
+// - primeiros 50: centro cirúrgico e estão de alta
+// - restantes: no leito (internados)
+
+function criarHospital(totalPacientes = 400, pacientesCentro = 50) {
+  if (pacientesCentro > totalPacientes) {
+    throw new Error("pacientesCentro não pode ser maior que totalPacientes");
+  }
+
+  const pacientes = [];
+
+  // cria os 50 do centro cirúrgico (já de alta)
+  for (let i = 1; i <= pacientesCentro; i++) {
+    pacientes.push({
+      id: i,
+      nome: `Paciente ${i}`,
+      local: "Centro Cirúrgico",
+      status: "Alta", // estão de alta
+      dataRegistro: new Date().toISOString().slice(0, 10)
+    });
+  }
+
+  // cria os restantes nos leitos (internados)
+  for (let i = pacientesCentro + 1; i <= totalPacientes; i++) {
+    pacientes.push({
+      id: i,
+      nome: `Paciente ${i}`,
+      local: "Leito",
+      status: "Internado",
+      dataRegistro: new Date().toISOString().slice(0, 10)
+    });
+  }
+
+  return {
+    totalPacientes,
+    pacientesCentro,
+    pacientes,
+    resumo() {
+      const total = this.pacientes.length;
+      const centroCount = this.pacientes.filter(p => p.local === "Centro Cirúrgico").length;
+      const altaCount = this.pacientes.filter(p => p.status === "Alta").length;
+      const internados = this.pacientes.filter(p => p.status === "Internado").length;
+
+      return {
+        total,
+        centroCount,
+        altaCount,
+        internados,
+        percCentro: ((centroCount / total) * 100).toFixed(2) + "%",
+        percAlta: ((altaCount / total) * 100).toFixed(2) + "%",
+        percInternados: ((internados / total) * 100).toFixed(2) + "%"
+      };
+    },
+    listarAmostra(n = 5) {
+      return this.pacientes.slice(0, n);
+    }
+  };
+}
+
+// --- Uso ---
+const hospitalHoje = criarHospital(400, 50);
+console.log("Resumo do hospital (hoje):");
+console.table(hospitalHoje.resumo());
+
+console.log("\nAmostra de pacientes (primeiros 8):");
+console.table(hospitalHoje.listarAmostra(8));
