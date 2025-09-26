@@ -1,6 +1,6 @@
 // hospital.js (versão corrigida)
 //  - valida parâmetros
-//  - usa data local YYYY-MM-DD corretamente
+//  - usa data local 05-07-2024 corretamente
 //  - usa status coerente para pacientes do Centro Cirúrgico
 //  - adiciona funções: darAlta, internar, listarAmostra(random)
 
