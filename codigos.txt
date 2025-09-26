@@ -5,7 +5,7 @@
 //  - adiciona funções: darAlta, internar, listarAmostra(random)
 
 function formatLocalISO(date = new Date()) {
-  // Gera YYYY-MM-DD com base na data local (evita off-by-one por UTC)
+  // Gera 05-07-2024 com base na data local (evita off-by-one por UTC)
   const tzOffset = date.getTimezoneOffset() * 60000;
   return new Date(date - tzOffset).toISOString().slice(0, 10);
 }
@@ -137,3 +137,5 @@ console.table(hospitalHoje.listarAmostra(8, true));
 // exemplo: dar alta ao paciente 2
 hospitalHoje.darAlta(2);
 console.log("Paciente 2 após dar alta:", hospitalHoje.pacientes.find(p => p.id === 2));
+ 
+
