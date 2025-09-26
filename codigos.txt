@@ -1,23 +1,39 @@
-// hospital.js
-// Modelo simples: 400 pacientes
-// - primeiros 50: centro cirúrgico e estão de alta
-// - restantes: no leito (internados)
+// hospital.js (versão corrigida)
+//  - valida parâmetros
+//  - usa data local YYYY-MM-DD corretamente
+//  - usa status coerente para pacientes do Centro Cirúrgico
+//  - adiciona funções: darAlta, internar, listarAmostra(random)
+
+function formatLocalISO(date = new Date()) {
+  // Gera YYYY-MM-DD com base na data local (evita off-by-one por UTC)
+  const tzOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date - tzOffset).toISOString().slice(0, 10);
+}
 
 function criarHospital(totalPacientes = 400, pacientesCentro = 50) {
+  totalPacientes = parseInt(totalPacientes, 10);
+  pacientesCentro = parseInt(pacientesCentro, 10);
+
+  if (Number.isNaN(totalPacientes) || totalPacientes <= 0) {
+    throw new Error("totalPacientes deve ser um inteiro positivo");
+  }
+  if (Number.isNaN(pacientesCentro) || pacientesCentro < 0) {
+    throw new Error("pacientesCentro deve ser inteiro não-negativo");
+  }
   if (pacientesCentro > totalPacientes) {
     throw new Error("pacientesCentro não pode ser maior que totalPacientes");
   }
 
   const pacientes = [];
 
-  // cria os 50 do centro cirúrgico (já de alta)
+  // cria os pacientes do Centro Cirúrgico (marcados como "Pronto para Alta" ou "Em Observação")
   for (let i = 1; i <= pacientesCentro; i++) {
     pacientes.push({
       id: i,
       nome: `Paciente ${i}`,
       local: "Centro Cirúrgico",
-      status: "Alta", // estão de alta
-      dataRegistro: new Date().toISOString().slice(0, 10)
+      status: "Pronto para Alta", // mais coerente que "Alta"
+      dataRegistro: formatLocalISO()
     });
   }
 
@@ -28,20 +44,30 @@ function criarHospital(totalPacientes = 400, pacientesCentro = 50) {
       nome: `Paciente ${i}`,
       local: "Leito",
       status: "Internado",
-      dataRegistro: new Date().toISOString().slice(0, 10)
+      dataRegistro: formatLocalISO()
     });
+  }
+
+  // utilitário para amostrar aleatoriamente
+  function shuffleArray(arr) {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
   }
 
   return {
     totalPacientes,
     pacientesCentro,
     pacientes,
+
     resumo() {
       const total = this.pacientes.length;
       const centroCount = this.pacientes.filter(p => p.local === "Centro Cirúrgico").length;
       const altaCount = this.pacientes.filter(p => p.status === "Alta").length;
       const internados = this.pacientes.filter(p => p.status === "Internado").length;
-
       return {
         total,
         centroCount,
@@ -52,16 +78,62 @@ function criarHospital(totalPacientes = 400, pacientesCentro = 50) {
         percInternados: ((internados / total) * 100).toFixed(2) + "%"
       };
     },
-    listarAmostra(n = 5) {
+
+    listarAmostra(n = 5, aleatorio = false) {
+      if (aleatorio) {
+        return shuffleArray(this.pacientes).slice(0, n);
+      }
       return this.pacientes.slice(0, n);
+    },
+
+    darAlta(id) {
+      const p = this.pacientes.find(x => x.id === id);
+      if (!p) throw new Error("Paciente não encontrado: " + id);
+      p.status = "Alta";
+      p.local = "Saída";
+      p.dataAlta = formatLocalISO();
+      return p;
+    },
+
+    internar(id) {
+      const p = this.pacientes.find(x => x.id === id);
+      if (!p) throw new Error("Paciente não encontrado: " + id);
+      p.status = "Internado";
+      p.local = "Leito";
+      return p;
+    },
+
+    moverParaCentro(id) {
+      const p = this.pacientes.find(x => x.id === id);
+      if (!p) throw new Error("Paciente não encontrado: " + id);
+      p.local = "Centro Cirúrgico";
+      p.status = "Em Observação";
+      return p;
+    },
+
+    adicionarPaciente({ nome = "Paciente novo", local = "Leito", status = "Internado" } = {}) {
+      const newId = this.pacientes.length ? Math.max(...this.pacientes.map(p => p.id)) + 1 : 1;
+      const novo = {
+        id: newId,
+        nome,
+        local,
+        status,
+        dataRegistro: formatLocalISO()
+      };
+      this.pacientes.push(novo);
+      return novo;
     }
   };
 }
 
 // --- Uso ---
 const hospitalHoje = criarHospital(400, 50);
-console.log("Resumo do hospital (hoje):");
+console.log("Resumo:");
 console.table(hospitalHoje.resumo());
 
-console.log("\nAmostra de pacientes (primeiros 8):");
-console.table(hospitalHoje.listarAmostra(8));
+console.log("Amostra aleatória (8):");
+console.table(hospitalHoje.listarAmostra(8, true));
+
+// exemplo: dar alta ao paciente 2
+hospitalHoje.darAlta(2);
+console.log("Paciente 2 após dar alta:", hospitalHoje.pacientes.find(p => p.id === 2));
